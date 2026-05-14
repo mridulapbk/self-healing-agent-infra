@@ -1,5 +1,16 @@
 package main
-import "fmt"
-func main(){
-	fmt.Println("Self-Healing Agent Infrastructure Started")
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"self-healing-agent-infra/internal/orchestrator"
+)
+
+func main() {
+	http.HandleFunc("/workflow/start", orchestrator.StartWorkflowHandler)
+
+	fmt.Println("Server started on http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
