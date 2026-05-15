@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"self-healing-agent-infra/internal/agents"
 	"self-healing-agent-infra/internal/models"
 
 	"github.com/google/uuid"
@@ -28,6 +29,7 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req StartWorkflowRequest
+
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -45,10 +47,12 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt:  time.Now().Format(time.RFC3339),
 	}
 
+	processedTask := agents.ProcessTask(task)
+
 	response := StartWorkflowResponse{
-		Message: "workflow started",
-		TaskID:  task.ID,
-		Status:  task.Status,
+		Message: "workflow processed",
+		TaskID:  processedTask.ID,
+		Status:  processedTask.Status,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
