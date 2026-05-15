@@ -12,11 +12,11 @@ func ProcessTask(task models.Task) models.Task {
 	task.Status = models.StatusRunning
 	task.UpdatedAt = time.Now().Format(time.RFC3339)
 
-	fmt.Println("Processing task:", task.ID)
+	fmt.Println("Processing task:", task.ID, "Attempt:", task.RetryCount+1)
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 
-	if rand.Intn(100) < 30 {
+	if rand.Intn(100) < 50 {
 		task.Status = models.StatusFailed
 		fmt.Println("Task failed:", task.ID)
 	} else {

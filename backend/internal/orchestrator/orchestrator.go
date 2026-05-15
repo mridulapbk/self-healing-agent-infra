@@ -17,9 +17,10 @@ type StartWorkflowRequest struct {
 }
 
 type StartWorkflowResponse struct {
-	Message string            `json:"message"`
-	TaskID  string            `json:"task_id"`
-	Status  models.TaskStatus `json:"status"`
+	Message    string            `json:"message"`
+	TaskID     string            `json:"task_id"`
+	Status     models.TaskStatus `json:"status"`
+	RetryCount int               `json:"retry_count"`
 }
 
 func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +30,6 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req StartWorkflowRequest
-
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -49,10 +49,28 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 
 	processedTask := agents.ProcessTask(task)
 
+	for processedTask.Status == models.StatusFailed && processedTask.RetryCount < processedTask.MaxRetries {
+		processedTask.RetryCount++
+		processedTask = agents.ProcessTask(processedTask)
+
+		if processedTask.Status == models.StatusCompleted && processedTask.RetryCount > 0 {
+			processedTask.Status = models.StatusRecovered
+			break
+		}
+	}
+
+	message := "workflow processed"
+	if processedTask.Status == models.StatusRecovered {
+		message = "workflow recovered after retry"
+	} else if processedTask.Status == models.StatusFailed {
+		message = "workflow failed after maximum retries"
+	}
+
 	response := StartWorkflowResponse{
-		Message: "workflow processed",
-		TaskID:  processedTask.ID,
-		Status:  processedTask.Status,
+		Message:    message,
+		TaskID:     processedTask.ID,
+		Status:     processedTask.Status,
+		RetryCount: processedTask.RetryCount,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
