@@ -9,17 +9,18 @@ import (
 	"self-healing-agent-infra/internal/queue"
 )
 
-func StartWorker() {
+func StartWorker(workerID int) {
 	go func() {
-		fmt.Println("Background worker started")
+		fmt.Println("Background worker started:", workerID)
 
 		for task := range queue.GetTaskQueue() {
-			processWorkflow(task)
+			fmt.Println("Worker", workerID, "picked task:", task.ID)
+			processWorkflow(workerID, task)
 		}
 	}()
 }
 
-func processWorkflow(task models.Task) {
+func processWorkflow(workerID int, task models.Task) {
 	workflowStartTime := time.Now()
 
 	task.Status = models.StatusRunning
@@ -32,6 +33,8 @@ func processWorkflow(task models.Task) {
 	for processedTask.Status == models.StatusFailed && processedTask.RetryCount < processedTask.MaxRetries {
 		processedTask.RetryCount++
 		SaveTask(processedTask)
+
+		fmt.Println("Worker", workerID, "retrying task:", processedTask.ID, "Retry:", processedTask.RetryCount)
 
 		processedTask = agents.ProcessTask(processedTask)
 
@@ -48,5 +51,5 @@ func processWorkflow(task models.Task) {
 
 	SaveTask(processedTask)
 
-	fmt.Println("Workflow finished:", processedTask.ID, processedTask.Status)
+	fmt.Println("Worker", workerID, "finished task:", processedTask.ID, "Status:", processedTask.Status)
 }

@@ -9,7 +9,9 @@ import (
 )
 
 func main() {
-	orchestrator.StartWorker()
+	orchestrator.StartWorker(1)
+	orchestrator.StartWorker(2)
+	orchestrator.StartWorker(3)
 
 	http.HandleFunc("/workflow/start", orchestrator.StartWorkflowHandler)
 	http.HandleFunc("/workflow/status", orchestrator.GetWorkflowStatusHandler)
