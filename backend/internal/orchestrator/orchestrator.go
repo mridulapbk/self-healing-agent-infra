@@ -74,6 +74,8 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 		message = "workflow failed after maximum retries"
 	}
 
+	SaveTask(processedTask)
+
 	response := StartWorkflowResponse{
 		Message:          message,
 		TaskID:           processedTask.ID,
@@ -84,4 +86,26 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func GetWorkflowStatusHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Only GET method allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	taskID := r.URL.Query().Get("id")
+	if taskID == "" {
+		http.Error(w, "Task ID is required", http.StatusBadRequest)
+		return
+	}
+
+	task, exists := GetTask(taskID)
+	if !exists {
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(task)
 }
