@@ -11,12 +11,15 @@ const (
 )
 
 type Task struct {
-	ID         string
-	Type       string
-	Payload    string
-	Status     TaskStatus
-	RetryCount int
-	MaxRetries int
-	CreatedAt  string
-	UpdatedAt  string
+	ID               string     `json:"id"`
+	Type             string     `json:"type"`
+	Payload          string     `json:"payload"`
+	Status           TaskStatus `json:"status"`
+	RetryCount       int        `json:"retry_count"`
+	MaxRetries       int        `json:"max_retries"`
+	CreatedAt        string     `json:"created_at"`
+	UpdatedAt        string     `json:"updated_at"`
+	StartedAt        string     `json:"started_at"`
+	CompletedAt      string     `json:"completed_at"`
+	RecoveryDuration string     `json:"recovery_duration"`
 }

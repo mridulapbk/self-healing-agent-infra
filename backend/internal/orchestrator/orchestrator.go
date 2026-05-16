@@ -17,10 +17,11 @@ type StartWorkflowRequest struct {
 }
 
 type StartWorkflowResponse struct {
-	Message    string            `json:"message"`
-	TaskID     string            `json:"task_id"`
-	Status     models.TaskStatus `json:"status"`
-	RetryCount int               `json:"retry_count"`
+	Message          string            `json:"message"`
+	TaskID           string            `json:"task_id"`
+	Status           models.TaskStatus `json:"status"`
+	RetryCount       int               `json:"retry_count"`
+	RecoveryDuration string            `json:"recovery_duration"`
 }
 
 func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +37,8 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	workflowStartTime := time.Now()
+
 	task := models.Task{
 		ID:         uuid.New().String(),
 		Type:       req.Type,
@@ -43,8 +46,9 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 		Status:     models.StatusPending,
 		RetryCount: 0,
 		MaxRetries: 3,
-		CreatedAt:  time.Now().Format(time.RFC3339),
-		UpdatedAt:  time.Now().Format(time.RFC3339),
+		CreatedAt:  workflowStartTime.Format(time.RFC3339),
+		UpdatedAt:  workflowStartTime.Format(time.RFC3339),
+		StartedAt:  workflowStartTime.Format(time.RFC3339),
 	}
 
 	processedTask := agents.ProcessTask(task)
@@ -59,6 +63,10 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	workflowEndTime := time.Now()
+	processedTask.CompletedAt = workflowEndTime.Format(time.RFC3339)
+	processedTask.RecoveryDuration = workflowEndTime.Sub(workflowStartTime).String()
+
 	message := "workflow processed"
 	if processedTask.Status == models.StatusRecovered {
 		message = "workflow recovered after retry"
@@ -67,10 +75,11 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := StartWorkflowResponse{
-		Message:    message,
-		TaskID:     processedTask.ID,
-		Status:     processedTask.Status,
-		RetryCount: processedTask.RetryCount,
+		Message:          message,
+		TaskID:           processedTask.ID,
+		Status:           processedTask.Status,
+		RetryCount:       processedTask.RetryCount,
+		RecoveryDuration: processedTask.RecoveryDuration,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
