@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"self-healing-agent-infra/internal/agents"
 	"self-healing-agent-infra/internal/models"
+	"self-healing-agent-infra/internal/queue"
 
 	"github.com/google/uuid"
 )
@@ -17,11 +17,10 @@ type StartWorkflowRequest struct {
 }
 
 type StartWorkflowResponse struct {
-	Message          string            `json:"message"`
-	TaskID           string            `json:"task_id"`
-	Status           models.TaskStatus `json:"status"`
-	RetryCount       int               `json:"retry_count"`
-	RecoveryDuration string            `json:"recovery_duration"`
+	Message    string            `json:"message"`
+	TaskID     string            `json:"task_id"`
+	Status     models.TaskStatus `json:"status"`
+	RetryCount int               `json:"retry_count"`
 }
 
 func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +36,7 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	workflowStartTime := time.Now()
+	now := time.Now()
 
 	task := models.Task{
 		ID:         uuid.New().String(),
@@ -46,42 +45,18 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 		Status:     models.StatusPending,
 		RetryCount: 0,
 		MaxRetries: 3,
-		CreatedAt:  workflowStartTime.Format(time.RFC3339),
-		UpdatedAt:  workflowStartTime.Format(time.RFC3339),
-		StartedAt:  workflowStartTime.Format(time.RFC3339),
+		CreatedAt:  now.Format(time.RFC3339),
+		UpdatedAt:  now.Format(time.RFC3339),
 	}
 
-	processedTask := agents.ProcessTask(task)
-
-	for processedTask.Status == models.StatusFailed && processedTask.RetryCount < processedTask.MaxRetries {
-		processedTask.RetryCount++
-		processedTask = agents.ProcessTask(processedTask)
-
-		if processedTask.Status == models.StatusCompleted && processedTask.RetryCount > 0 {
-			processedTask.Status = models.StatusRecovered
-			break
-		}
-	}
-
-	workflowEndTime := time.Now()
-	processedTask.CompletedAt = workflowEndTime.Format(time.RFC3339)
-	processedTask.RecoveryDuration = workflowEndTime.Sub(workflowStartTime).String()
-
-	message := "workflow processed"
-	if processedTask.Status == models.StatusRecovered {
-		message = "workflow recovered after retry"
-	} else if processedTask.Status == models.StatusFailed {
-		message = "workflow failed after maximum retries"
-	}
-
-	SaveTask(processedTask)
+	SaveTask(task)
+	queue.EnqueueTask(task)
 
 	response := StartWorkflowResponse{
-		Message:          message,
-		TaskID:           processedTask.ID,
-		Status:           processedTask.Status,
-		RetryCount:       processedTask.RetryCount,
-		RecoveryDuration: processedTask.RecoveryDuration,
+		Message:    "workflow accepted and queued",
+		TaskID:     task.ID,
+		Status:     task.Status,
+		RetryCount: task.RetryCount,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
