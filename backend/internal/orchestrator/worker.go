@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"self-healing-agent-infra/internal/agents"
+	"self-healing-agent-infra/internal/metrics"
 	"self-healing-agent-infra/internal/models"
 	"self-healing-agent-infra/internal/queue"
 )
@@ -50,6 +51,7 @@ func processWorkflow(workerID int, task models.Task) {
 	processedTask.UpdatedAt = workflowEndTime.Format(time.RFC3339)
 
 	SaveTask(processedTask)
+	metrics.RecordWorkerResult(workerID, string(processedTask.Status))
 
 	fmt.Println("Worker", workerID, "finished task:", processedTask.ID, "Status:", processedTask.Status)
 }
