@@ -3,6 +3,7 @@ package orchestrator
 import (
 	"sync"
 
+	"self-healing-agent-infra/internal/database"
 	"self-healing-agent-infra/internal/models"
 )
 
@@ -13,12 +14,22 @@ var (
 
 func SaveTask(task models.Task) {
 	storeLock.Lock()
-	defer storeLock.Unlock()
-
 	taskStore[task.ID] = task
+	storeLock.Unlock()
+
+	err := database.SaveTaskToDB(task)
+	if err != nil {
+		// Keep app running even if DB write fails
+		println("Failed to save task to DB:", err.Error())
+	}
 }
 
 func GetTask(taskID string) (models.Task, bool) {
+	task, err := database.GetTaskFromDB(taskID)
+	if err == nil {
+		return task, true
+	}
+
 	storeLock.RLock()
 	defer storeLock.RUnlock()
 

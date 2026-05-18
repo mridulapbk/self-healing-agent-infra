@@ -5,10 +5,13 @@ import (
 	"log"
 	"net/http"
 
+	"self-healing-agent-infra/internal/database"
 	"self-healing-agent-infra/internal/orchestrator"
 )
 
 func main() {
+	database.InitDB()
+
 	orchestrator.StartWorker(1)
 	orchestrator.StartWorker(2)
 	orchestrator.StartWorker(3)
