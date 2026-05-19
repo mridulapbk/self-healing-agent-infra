@@ -7,10 +7,12 @@ import (
 
 	"self-healing-agent-infra/internal/database"
 	"self-healing-agent-infra/internal/orchestrator"
+	"self-healing-agent-infra/internal/queue"
 )
 
 func main() {
 	database.InitDB()
+	queue.InitRedisQueue()
 
 	orchestrator.StartWorker(1)
 	orchestrator.StartWorker(2)

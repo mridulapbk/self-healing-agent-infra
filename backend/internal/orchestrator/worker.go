@@ -14,7 +14,13 @@ func StartWorker(workerID int) {
 	go func() {
 		fmt.Println("Background worker started:", workerID)
 
-		for task := range queue.GetTaskQueue() {
+		for {
+			task, err := queue.DequeueTask()
+			if err != nil {
+				fmt.Println("Worker", workerID, "failed to dequeue task:", err)
+				continue
+			}
+
 			fmt.Println("Worker", workerID, "picked task:", task.ID)
 			processWorkflow(workerID, task)
 		}
