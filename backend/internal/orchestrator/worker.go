@@ -1,10 +1,10 @@
 package orchestrator
 
 import (
-	"fmt"
 	"time"
 
 	"self-healing-agent-infra/internal/agents"
+	"self-healing-agent-infra/internal/logger"
 	"self-healing-agent-infra/internal/metrics"
 	"self-healing-agent-infra/internal/models"
 	"self-healing-agent-infra/internal/queue"
@@ -12,16 +12,16 @@ import (
 
 func StartWorker(workerID int) {
 	go func() {
-		fmt.Println("Background worker started:", workerID)
+		logger.Log("INFO", "worker_started", workerID, "", "", 0, "background worker started")
 
 		for {
 			task, err := queue.DequeueTask()
 			if err != nil {
-				fmt.Println("Worker", workerID, "failed to dequeue task:", err)
+				logger.Log("ERROR", "dequeue_failed", workerID, "", "", 0, err.Error())
 				continue
 			}
 
-			fmt.Println("Worker", workerID, "picked task:", task.ID)
+			logger.Log("INFO", "task_picked", workerID, task.ID, string(task.Status), task.RetryCount, "worker picked task")
 			processWorkflow(workerID, task)
 		}
 	}()
@@ -41,7 +41,7 @@ func processWorkflow(workerID int, task models.Task) {
 		processedTask.RetryCount++
 		SaveTask(processedTask)
 
-		fmt.Println("Worker", workerID, "retrying task:", processedTask.ID, "Retry:", processedTask.RetryCount)
+		logger.Log("WARN", "task_retry", workerID, processedTask.ID, string(processedTask.Status), processedTask.RetryCount, "retrying failed task")
 
 		processedTask = agents.ProcessTask(processedTask)
 
@@ -59,5 +59,5 @@ func processWorkflow(workerID int, task models.Task) {
 	SaveTask(processedTask)
 	metrics.RecordWorkerResult(workerID, string(processedTask.Status))
 
-	fmt.Println("Worker", workerID, "finished task:", processedTask.ID, "Status:", processedTask.Status)
+	logger.Log("INFO", "task_finished", workerID, processedTask.ID, string(processedTask.Status), processedTask.RetryCount, "worker finished task")
 }
