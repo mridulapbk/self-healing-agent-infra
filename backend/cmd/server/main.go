@@ -22,7 +22,7 @@ func main() {
 	http.HandleFunc("/workflow/start", orchestrator.StartWorkflowHandler)
 	http.HandleFunc("/workflow/status", orchestrator.GetWorkflowStatusHandler)
 	http.HandleFunc("/metrics/workers", orchestrator.GetWorkerMetricsHandler)
-
+	http.HandleFunc("/metrics/system", orchestrator.GetSystemMetricsHandler)
 	fmt.Println("Server started on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
