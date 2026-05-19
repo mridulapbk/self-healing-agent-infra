@@ -31,8 +31,10 @@ func StartWorker(workerID int) {
 				task.Status = models.StatusFailed
 				task.UpdatedAt = time.Now().Format(time.RFC3339)
 				SaveTask(task)
+
 				metrics.RecordWorkerResult(workerID, string(task.Status))
 				metrics.RecordSystemResult(string(task.Status))
+				metrics.RecordBenchmarkResult(string(task.Status), 0)
 
 				continue
 			}
@@ -70,13 +72,19 @@ func processWorkflow(workerID int, task models.Task) {
 	}
 
 	workflowEndTime := time.Now()
+
 	processedTask.CompletedAt = workflowEndTime.Format(time.RFC3339)
 	processedTask.RecoveryDuration = workflowEndTime.Sub(workflowStartTime).String()
 	processedTask.UpdatedAt = workflowEndTime.Format(time.RFC3339)
 
 	SaveTask(processedTask)
+
 	metrics.RecordWorkerResult(workerID, string(processedTask.Status))
 	metrics.RecordSystemResult(string(processedTask.Status))
+	metrics.RecordBenchmarkResult(
+		string(processedTask.Status),
+		workflowEndTime.Sub(workflowStartTime),
+	)
 
 	logger.Log("INFO", "task_finished", workerID, processedTask.ID, string(processedTask.Status), processedTask.RetryCount, "worker finished task")
 }
