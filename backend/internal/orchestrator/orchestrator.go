@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"self-healing-agent-infra/internal/config"
 	"self-healing-agent-infra/internal/models"
 	"self-healing-agent-infra/internal/queue"
 
@@ -44,7 +45,7 @@ func StartWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 		Payload:    req.Payload,
 		Status:     models.StatusPending,
 		RetryCount: 0,
-		MaxRetries: 3,
+		MaxRetries: config.Config.MaxRetries,
 		CreatedAt:  now.Format(time.RFC3339),
 		UpdatedAt:  now.Format(time.RFC3339),
 	}

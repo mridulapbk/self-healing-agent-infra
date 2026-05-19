@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"self-healing-agent-infra/internal/config"
 	"self-healing-agent-infra/internal/database"
 	"self-healing-agent-infra/internal/orchestrator"
 	"self-healing-agent-infra/internal/queue"
@@ -14,9 +15,9 @@ func main() {
 	database.InitDB()
 	queue.InitRedisQueue()
 
-	orchestrator.StartWorker(1)
-	orchestrator.StartWorker(2)
-	orchestrator.StartWorker(3)
+	for i := 1; i <= config.Config.WorkerCount; i++ {
+		orchestrator.StartWorker(i)
+	}
 
 	http.HandleFunc("/workflow/start", orchestrator.StartWorkflowHandler)
 	http.HandleFunc("/workflow/status", orchestrator.GetWorkflowStatusHandler)
