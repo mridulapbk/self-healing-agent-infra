@@ -1,6 +1,7 @@
 import WorkerChart from "@/components/WorkerChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TaskDistributionChart from "@/components/TaskDistributionChart";
+import StartWorkflowButton from "@/components/StartWorkflowButton";
 import {
   getBenchmarkMetrics,
   getSystemMetrics,
@@ -24,13 +25,18 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-slate-50 p-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight">
-          Self-Healing Agent Infrastructure Dashboard
-        </h1>
-        <p className="mt-2 text-slate-600">
-          Live monitoring of distributed workflows
-        </p>
-      </div>
+  <h1 className="text-4xl font-bold tracking-tight">
+    Self-Healing Agent Infrastructure Dashboard
+  </h1>
+
+  <p className="mt-2 text-slate-600">
+    Live monitoring of distributed workflows
+  </p>
+
+  <div className="mt-6">
+    <StartWorkflowButton />
+  </div>
+</div>
 
       <section className="mb-10">
         <h2 className="mb-4 text-2xl font-semibold">System Metrics</h2>
