@@ -1,7 +1,8 @@
 import WorkerChart from "@/components/WorkerChart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TaskDistributionChart from "@/components/TaskDistributionChart";
 import StartWorkflowButton from "@/components/StartWorkflowButton";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getBenchmarkMetrics,
   getSystemMetrics,
@@ -23,20 +24,24 @@ export default async function Home() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
-      <div className="mb-8">
-  <h1 className="text-4xl font-bold tracking-tight">
-    Self-Healing Agent Infrastructure Dashboard
-  </h1>
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8">
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">
+            Self-Healing Agent Infrastructure Dashboard
+          </h1>
 
-  <p className="mt-2 text-slate-600">
-    Live monitoring of distributed workflows
-  </p>
+          <p className="mt-2 text-slate-600 dark:text-slate-400">
+            Live monitoring of distributed workflows
+          </p>
 
-  <div className="mt-6">
-    <StartWorkflowButton />
-  </div>
-</div>
+          <div className="mt-6">
+            <StartWorkflowButton />
+          </div>
+        </div>
+
+        <ThemeToggle />
+      </div>
 
       <section className="mb-10">
         <h2 className="mb-4 text-2xl font-semibold">System Metrics</h2>
@@ -185,9 +190,9 @@ export default async function Home() {
       <section className="mb-10">
         <h2 className="mb-4 text-2xl font-semibold">Worker Metrics</h2>
 
-        <div className="overflow-hidden rounded-lg border bg-white">
+        <div className="overflow-hidden rounded-lg border bg-white dark:bg-slate-900">
           <table className="w-full">
-            <thead className="bg-slate-100">
+            <thead className="bg-slate-100 dark:bg-slate-800">
               <tr>
                 <th className="p-4 text-left">Worker</th>
                 <th className="p-4 text-left">Processed</th>
@@ -200,19 +205,11 @@ export default async function Home() {
             <tbody>
               {Object.entries(workerMetrics).map(([workerId, metric]) => (
                 <tr key={workerId} className="border-t">
-                  <td className="p-4 font-medium">
-                    Worker {workerId}
-                  </td>
+                  <td className="p-4 font-medium">Worker {workerId}</td>
                   <td className="p-4">{metric.processed}</td>
-                  <td className="p-4 text-green-600">
-                    {metric.completed}
-                  </td>
-                  <td className="p-4 text-blue-600">
-                    {metric.recovered}
-                  </td>
-                  <td className="p-4 text-red-600">
-                    {metric.failed}
-                  </td>
+                  <td className="p-4 text-green-600">{metric.completed}</td>
+                  <td className="p-4 text-blue-600">{metric.recovered}</td>
+                  <td className="p-4 text-red-600">{metric.failed}</td>
                 </tr>
               ))}
             </tbody>
