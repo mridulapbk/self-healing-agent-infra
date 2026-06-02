@@ -278,38 +278,36 @@ GET /metrics/benchmark
 
 ## Experimental Results
 
-The platform was benchmarked using 120 workflow executions with fault injection enabled to evaluate recovery performance and system resilience.
+The platform was benchmarked using 620 workflow executions with fault injection enabled to evaluate recovery performance and system resilience.
 
 ### Benchmark Results
 
 | Metric | Value |
 |----------|----------|
-| Total Workflows | 120 |
-| Completed Tasks | 58 |
-| Recovered Tasks | 41 |
-| Failed Tasks | 21 |
-| Success Rate | 82.5% |
-| Recovery Rate | 34.17% |
-| Failure Rate | 17.5% |
-| Average Recovery Time | 1581 ms |
+| Total Workflows | 620 |
+| Completed Tasks | 285 |
+| Recovered Tasks | 239 |
+| Failed Tasks | 96 |
+| Success Rate | 84.52% |
+| Failure Rate | 15.48% |
+| Average Recovery Time | 1709 ms |
 | Concurrent Workers | 3 |
 
 ### Worker Distribution
 
 | Worker | Processed | Completed | Recovered | Failed |
 |----------|----------|----------|----------|----------|
-| Worker 1 | 47 | 27 | 14 | 6 |
-| Worker 2 | 41 | 20 | 14 | 7 |
-| Worker 3 | 32 | 11 | 13 | 8 |
+| Worker 1 | 196 | 84 | 78 | 34 |
+| Worker 2 | 215 | 105 | 82 | 28 |
+| Worker 3 | 209 | 96 | 79 | 34 |
 
 ### Key Findings
 
-* Successfully processed 99 out of 120 workflows.
-* Automatically recovered 41 failed workflow executions through retry-based self-healing mechanisms.
-* Achieved an overall workflow success rate of 82.5%.
-* Demonstrated fault tolerance under worker failures and injected task failures.
-* Maintained balanced workload distribution across concurrent workers.
-
+* Successfully processed 524 out of 620 workflows.
+* Automatically recovered 239 failed workflow executions.
+* Achieved an overall workflow success rate of 84.52%.
+* Demonstrated fault tolerance under injected task failures and worker crashes.
+* Maintained balanced workload distribution across 3 concurrent workers.
 
 ---
 
