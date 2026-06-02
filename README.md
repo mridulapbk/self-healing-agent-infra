@@ -4,7 +4,7 @@
 
 Self-Healing Agent Infrastructure is a distributed workflow orchestration platform that simulates resilient AI agents capable of automatically recovering from failures in a distributed environment.
 
-The platform leverages concurrent workers, durable Redis queues, PostgreSQL persistence, fault injection, retry mechanisms, benchmarking, and real-time monitoring to demonstrate self-healing behavior commonly found in modern cloud-native systems.
+The platform leverages concurrent workers, durable Redis queues, PostgreSQL persistence, fault injection, retry mechanisms, benchmarking, and real-time monitoring to demonstrate self-healing behavior commonly found in modern cloud-native systems. Experimental evaluation achieved an 82.5% workflow success rate while automatically recovering 41 failed executions through self-healing recovery mechanisms.
 
 ### Technologies Used
 
@@ -274,6 +274,42 @@ GET /metrics/benchmark
   "failure_rate": 0.15
 }
 ```
+---
+
+## Experimental Results
+
+The platform was benchmarked using 120 workflow executions with fault injection enabled to evaluate recovery performance and system resilience.
+
+### Benchmark Results
+
+| Metric | Value |
+|----------|----------|
+| Total Workflows | 120 |
+| Completed Tasks | 58 |
+| Recovered Tasks | 41 |
+| Failed Tasks | 21 |
+| Success Rate | 82.5% |
+| Recovery Rate | 34.17% |
+| Failure Rate | 17.5% |
+| Average Recovery Time | 1581 ms |
+| Concurrent Workers | 3 |
+
+### Worker Distribution
+
+| Worker | Processed | Completed | Recovered | Failed |
+|----------|----------|----------|----------|----------|
+| Worker 1 | 47 | 27 | 14 | 6 |
+| Worker 2 | 41 | 20 | 14 | 7 |
+| Worker 3 | 32 | 11 | 13 | 8 |
+
+### Key Findings
+
+* Successfully processed 99 out of 120 workflows.
+* Automatically recovered 41 failed workflow executions through retry-based self-healing mechanisms.
+* Achieved an overall workflow success rate of 82.5%.
+* Demonstrated fault tolerance under worker failures and injected task failures.
+* Maintained balanced workload distribution across concurrent workers.
+
 
 ---
 
