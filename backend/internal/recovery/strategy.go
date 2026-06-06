@@ -1,6 +1,9 @@
 package recovery
 
-import "time"
+import (
+	"os"
+	"time"
+)
 
 type Strategy string
 
@@ -9,6 +12,21 @@ const (
 	FixedRetry         Strategy = "FIXED_RETRY"
 	ExponentialBackoff Strategy = "EXPONENTIAL_BACKOFF"
 )
+
+func GetStrategyFromEnv() Strategy {
+	strategy := os.Getenv("RECOVERY_STRATEGY")
+
+	switch Strategy(strategy) {
+	case NoRecovery:
+		return NoRecovery
+	case FixedRetry:
+		return FixedRetry
+	case ExponentialBackoff:
+		return ExponentialBackoff
+	default:
+		return FixedRetry
+	}
+}
 
 func GetRetryDelay(strategy Strategy, retryCount int) time.Duration {
 	switch strategy {
@@ -27,5 +45,6 @@ func ShouldRetry(strategy Strategy, retryCount int, maxRetries int) bool {
 	if strategy == NoRecovery {
 		return false
 	}
+
 	return retryCount < maxRetries
 }

@@ -48,7 +48,7 @@ func StartWorker(workerID int) {
 func processWorkflow(workerID int, task models.Task) {
 	workflowStartTime := time.Now()
 
-	strategy := recovery.NoRecovery
+	strategy := recovery.GetStrategyFromEnv()
 
 	task.Status = models.StatusRunning
 	task.StartedAt = workflowStartTime.Format(time.RFC3339)
