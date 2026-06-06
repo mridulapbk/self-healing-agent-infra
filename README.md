@@ -2,11 +2,15 @@
 
 ## Overview
 
-Self-Healing Agent Infrastructure is a distributed workflow orchestration platform that simulates resilient AI agents capable of automatically recovering from failures in a distributed environment.
+Self-Healing Agent Infrastructure is a distributed workflow orchestration platform designed to evaluate fault tolerance and automated recovery in modern cloud-native systems. The platform simulates resilient agents capable of detecting failures, recovering from disruptions, and maintaining workflow execution without manual intervention.
 
-The platform leverages concurrent workers, durable Redis queues, PostgreSQL persistence, fault injection, retry mechanisms, benchmarking, and real-time monitoring to demonstrate self-healing behavior commonly found in modern cloud-native systems. Experimental evaluation achieved an 82.5% workflow success rate while automatically recovering 41 failed executions through self-healing recovery mechanisms.
+Built using Golang, Redis, PostgreSQL, Docker, and Next.js, the system combines distributed task processing, durable queues, configurable recovery strategies, benchmarking, and real-time monitoring to demonstrate self-healing behavior in distributed environments.
 
-### Technologies Used
+Experimental evaluation processed over **620 workflow executions**, achieving an **84.52% workflow success rate** while automatically recovering **239 failed executions** through self-healing recovery mechanisms.
+
+---
+
+## Technologies Used
 
 * Golang
 * PostgreSQL
@@ -19,7 +23,7 @@ The platform leverages concurrent workers, durable Redis queues, PostgreSQL pers
 
 ---
 
-## System Architecture Flow
+## System Architecture
 
 ```text
 Client Request
@@ -35,10 +39,10 @@ Worker Pool (3 Concurrent Workers)
       |
       +---- Success ----> PostgreSQL
       |
-      +---- Failure ----> Retry Engine
+      +---- Failure ----> Recovery Engine
                                |
                                v
-                        Self-Healing Recovery
+                        Self-Healing Logic
                                |
                                v
                           PostgreSQL
@@ -46,107 +50,97 @@ Worker Pool (3 Concurrent Workers)
 Metrics API
       |
       v
-Next.js Dashboard
+Next.js Monitoring Dashboard
 ```
 
 ---
 
-## Architecture
+## Architecture Components
 
-### Components
+### API Layer
 
-### 1. API Layer
+* Accepts workflow execution requests
+* Exposes monitoring and metrics APIs
+* Coordinates workflow orchestration
+* Enables frontend-backend communication
 
-* Accepts workflow requests
-* Exposes metrics endpoints
-* Manages workflow orchestration APIs
-* Provides communication between frontend and backend
-
-### 2. Redis Queue
+### Redis Queue
 
 * Durable task storage
+* Asynchronous workflow execution
 * Decouples producers and consumers
-* Supports asynchronous task execution
-* Enables distributed processing
+* Supports distributed processing
 
-### 3. Worker Pool
+### Worker Pool
 
-* Multiple concurrent workers
-* Pull tasks from Redis
-* Execute workflows independently
-* Simulate distributed AI agents
+* Three concurrent workers
+* Independent workflow execution
+* Distributed task processing
+* Load-balanced task consumption
 
-### 4. Self-Healing Engine
+### Recovery Engine
 
-* Detects failures
-* Retries failed tasks automatically
-* Recovers worker crashes
-* Tracks recovery metrics
+* Detects task failures
+* Executes configurable recovery strategies
+* Supports Fixed Retry and Exponential Backoff
+* Tracks recovery metrics and success rates
 
-### 5. PostgreSQL
+### PostgreSQL
 
-* Stores workflow execution history
-* Persists task states
-* Stores benchmark metrics
-* Maintains worker statistics
+* Persists workflow execution history
+* Stores task lifecycle states
+* Maintains benchmark metrics
+* Records worker statistics
 
-### 6. Monitoring Dashboard
+### Monitoring Dashboard
 
-* Real-time system monitoring
+* Real-time monitoring
 * Worker utilization analytics
-* Benchmark reporting
-* Mobile-responsive visualization
+* Benchmark visualization
+* Mobile-responsive interface
 
 ---
 
 ## Features
 
-### Workflow Orchestration
+### Distributed Workflow Orchestration
 
-* Create and execute distributed workflows
-* Concurrent task processing
-* Queue-based workload distribution
-* Asynchronous execution model
+* Queue-based workflow execution
+* Concurrent worker processing
+* Asynchronous task execution
+* Distributed workload management
 
 ### Self-Healing Recovery
 
-* Automatic retry mechanism
-* Recovery from transient failures
+* Automatic retry mechanisms
+* Failure detection and recovery
 * Worker crash simulation
-* Recovery rate tracking
-* Fault tolerance demonstration
-
-### Distributed Queue
-
-* Redis-backed durable queue
-* Reliable task delivery
-* Concurrent consumer support
-* Scalable processing architecture
+* Recovery effectiveness tracking
+* Configurable recovery strategies
 
 ### Fault Injection
 
-* Simulated worker crashes
 * Random task failures
-* Recovery benchmarking
+* Simulated worker crashes
 * Reliability testing
+* Recovery benchmarking
 
 ### Benchmarking
 
 * Success rate measurement
-* Throughput calculation
-* Recovery time tracking
+* Throughput analysis
+* Recovery latency tracking
 * Worker utilization analytics
-* Failure analysis
+* Failure pattern evaluation
 
 ### Monitoring Dashboard
 
 * System metrics
-* Benchmark metrics
 * Worker metrics
-* Worker utilization charts
+* Benchmark analytics
 * Task distribution visualization
-* Mobile responsive design
 * Workflow execution controls
+* Responsive UI
 
 ---
 
@@ -154,33 +148,19 @@ Next.js Dashboard
 
 ### Dashboard Overview
 
-![Dashboard Overview](docs/screenshots/dashboard-overview.jpg)
+Displays workflow execution metrics, worker utilization, benchmark results, and system health indicators.
 
-Complete dashboard displaying system metrics, benchmark metrics, worker metrics, workflow controls, and monitoring capabilities.
+### Worker Analytics
 
-### Mobile Responsive View
+Visualizes completed, recovered, and failed tasks across distributed workers.
 
-![Mobile View](docs/screenshots/mobile-view.png)
+### Benchmark Dashboard
 
-Responsive dashboard layout optimized for mobile devices.
-
-### Worker Metrics
-
-![Worker Metrics](docs/screenshots/worker-metrics.jpg)
-
-Worker performance statistics showing processed, completed, recovered, and failed tasks.
-
-### Charts & Visualizations
-
-![Charts](docs/screenshots/charts.jpg)
-
-Worker utilization and task distribution visualizations generated from live backend data.
+Tracks workflow throughput, recovery performance, and success rates.
 
 ### Workflow Execution Logs
 
-![Workflow Execution](docs/screenshots/workflow-execution.png)
-
-Terminal logs demonstrating workflow processing, retries, worker crashes, recovery events, and successful task completion.
+Shows task execution, failure injection, recovery events, and workflow completion.
 
 ---
 
@@ -206,7 +186,7 @@ cd backend
 go run cmd/server/main.go
 ```
 
-Backend starts at:
+Backend:
 
 ```text
 http://localhost:8080
@@ -220,10 +200,51 @@ npm install
 npm run dev
 ```
 
-Frontend starts at:
+Frontend:
 
 ```text
 http://localhost:3000
+```
+
+---
+
+## Recovery Strategy Configuration
+
+The platform supports configurable recovery strategies through environment variables.
+
+### Fixed Retry
+
+```bash
+cd backend
+RECOVERY_STRATEGY=FIXED_RETRY go run cmd/server/main.go
+```
+
+### Exponential Backoff
+
+```bash
+cd backend
+RECOVERY_STRATEGY=EXPONENTIAL_BACKOFF go run cmd/server/main.go
+```
+
+### No Recovery Baseline
+
+```bash
+cd backend
+RECOVERY_STRATEGY=NO_RECOVERY go run cmd/server/main.go
+```
+
+### Supported Strategies
+
+| Strategy            | Description                      |
+| ------------------- | -------------------------------- |
+| FIXED_RETRY         | Constant retry interval          |
+| EXPONENTIAL_BACKOFF | Increasing delay between retries |
+| NO_RECOVERY         | No retry attempts (baseline)     |
+
+Default Strategy:
+
+```text
+FIXED_RETRY
 ```
 
 ---
@@ -234,12 +255,6 @@ http://localhost:3000
 
 ```http
 POST /workflow/start
-```
-
-### Workflow Status
-
-```http
-GET /workflow/status
 ```
 
 ### Worker Metrics
@@ -262,76 +277,71 @@ GET /metrics/benchmark
 
 ---
 
-## Example Metrics
+## Experimental Evaluation
 
-```json
-{
-  "total_tasks": 20,
-  "completed_tasks": 9,
-  "recovered_tasks": 8,
-  "failed_tasks": 3,
-  "recovery_rate": 0.40,
-  "failure_rate": 0.15
-}
-```
----
+The platform was evaluated under identical fault-injection conditions using multiple recovery strategies to measure workflow reliability and recovery effectiveness.
 
-## Experimental Results
+### Recovery Strategy Comparison
 
-The platform was benchmarked using 620 workflow executions with fault injection enabled to evaluate recovery performance and system resilience.
+| Strategy            | Success Rate | Failure Rate | Recovered Tasks | Avg Recovery Time | Throughput         |
+| ------------------- | ------------ | ------------ | --------------- | ----------------- | ------------------ |
+| No Recovery         | 41.0%        | 59.0%        | 0               | 872.63 ms         | 3.41 workflows/sec |
+| Exponential Backoff | 84.0%        | 16.0%        | 34              | 3156.92 ms        | 0.93 workflows/sec |
+| Fixed Retry         | 89.0%        | 11.0%        | 44              | 2409 ms           | 1.23 workflows/sec |
 
-### Benchmark Results
+### Large Scale Benchmark Results
 
-| Metric | Value |
-|----------|----------|
-| Total Workflows | 620 |
-| Completed Tasks | 285 |
-| Recovered Tasks | 239 |
-| Failed Tasks | 96 |
-| Success Rate | 84.52% |
-| Failure Rate | 15.48% |
+| Metric                | Value   |
+| --------------------- | ------- |
+| Total Workflows       | 620     |
+| Completed Tasks       | 285     |
+| Recovered Tasks       | 239     |
+| Failed Tasks          | 96      |
+| Success Rate          | 84.52%  |
+| Failure Rate          | 15.48%  |
 | Average Recovery Time | 1709 ms |
-| Concurrent Workers | 3 |
+| Concurrent Workers    | 3       |
 
 ### Worker Distribution
 
-| Worker | Processed | Completed | Recovered | Failed |
-|----------|----------|----------|----------|----------|
-| Worker 1 | 196 | 84 | 78 | 34 |
-| Worker 2 | 215 | 105 | 82 | 28 |
-| Worker 3 | 209 | 96 | 79 | 34 |
+| Worker   | Processed | Completed | Recovered | Failed |
+| -------- | --------- | --------- | --------- | ------ |
+| Worker 1 | 196       | 84        | 78        | 34     |
+| Worker 2 | 215       | 105       | 82        | 28     |
+| Worker 3 | 209       | 96        | 79        | 34     |
 
 ### Key Findings
 
-* Successfully processed 524 out of 620 workflows.
-* Automatically recovered 239 failed workflow executions.
-* Achieved an overall workflow success rate of 84.52%.
-* Demonstrated fault tolerance under injected task failures and worker crashes.
-* Maintained balanced workload distribution across 3 concurrent workers.
+* Fixed Retry achieved the highest workflow success rate at 89%.
+* Self-healing mechanisms improved workflow completion rates from 41% to 89%.
+* Fixed Retry automatically recovered 44 failed workflows.
+* Exponential Backoff reduced retry pressure while maintaining an 84% success rate.
+* The platform automatically recovered 239 workflow failures across 620 executions.
+* Results demonstrate the effectiveness of automated recovery strategies in distributed workflow orchestration systems.
 
 ---
 
 ## Key Capabilities Demonstrated
 
-* Distributed task orchestration
-* Fault-tolerant workflow execution
+* Distributed workflow orchestration
+* Fault-tolerant execution
+* Self-healing recovery mechanisms
 * Worker crash simulation
-* Automatic retry and recovery
 * Queue-based architecture
-* Benchmarking and performance monitoring
-* Real-time dashboard visualization
-* Mobile responsive frontend
-* Persistent task storage
+* Benchmarking and performance evaluation
+* Real-time monitoring dashboards
+* Persistent workflow storage
 * Concurrent worker processing
+* Recovery strategy experimentation
 
 ---
 
 ## Future Enhancements
 
-* WebSocket-based real-time updates
+* Adaptive recovery strategy selection
 * Kubernetes deployment
 * Dynamic worker auto-scaling
-* AI-driven failure prediction
+* AI-based failure prediction
 * Distributed tracing
 * Prometheus integration
 * Grafana dashboards
@@ -348,5 +358,5 @@ Northeastern University
 
 * Software Engineer
 * Distributed Systems Enthusiast
-* Cloud & Backend Development
+* Backend & Cloud Development
 * AI Infrastructure and Automation
