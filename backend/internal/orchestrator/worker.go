@@ -10,6 +10,7 @@ import (
 	"self-healing-agent-infra/internal/metrics"
 	"self-healing-agent-infra/internal/models"
 	"self-healing-agent-infra/internal/queue"
+	"self-healing-agent-infra/internal/recovery"
 )
 
 func StartWorker(workerID int) {
@@ -47,6 +48,8 @@ func StartWorker(workerID int) {
 func processWorkflow(workerID int, task models.Task) {
 	workflowStartTime := time.Now()
 
+	strategy := recovery.NoRecovery
+
 	task.Status = models.StatusRunning
 	task.StartedAt = workflowStartTime.Format(time.RFC3339)
 	task.UpdatedAt = workflowStartTime.Format(time.RFC3339)
@@ -55,12 +58,24 @@ func processWorkflow(workerID int, task models.Task) {
 	processedTask := agents.ProcessTask(task)
 
 	for processedTask.Status == models.StatusFailed &&
-		processedTask.RetryCount < processedTask.MaxRetries {
+		recovery.ShouldRetry(strategy, processedTask.RetryCount, processedTask.MaxRetries) {
 
 		processedTask.RetryCount++
 		SaveTask(processedTask)
 
-		logger.Log("WARN", "task_retry", workerID, processedTask.ID, string(processedTask.Status), processedTask.RetryCount, "retrying failed task")
+		delay := recovery.GetRetryDelay(strategy, processedTask.RetryCount)
+
+		logger.Log(
+			"WARN",
+			"task_retry",
+			workerID,
+			processedTask.ID,
+			string(processedTask.Status),
+			processedTask.RetryCount,
+			"retrying failed task with recovery strategy",
+		)
+
+		time.Sleep(delay)
 
 		processedTask = agents.ProcessTask(processedTask)
 
