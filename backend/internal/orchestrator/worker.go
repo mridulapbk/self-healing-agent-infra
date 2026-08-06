@@ -1,6 +1,7 @@
 package orchestrator
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -15,19 +16,51 @@ import (
 
 func StartWorker(workerID int) {
 	go func() {
-		logger.Log("INFO", "worker_started", workerID, "", "", 0, "background worker started")
+		logger.Log(
+			"INFO",
+			"worker_started",
+			workerID,
+			"",
+			"",
+			0,
+			"background worker started",
+		)
 
 		for {
 			task, err := queue.DequeueTask()
 			if err != nil {
-				logger.Log("ERROR", "dequeue_failed", workerID, "", "", 0, err.Error())
+				logger.Log(
+					"ERROR",
+					"dequeue_failed",
+					workerID,
+					"",
+					"",
+					0,
+					err.Error(),
+				)
 				continue
 			}
 
-			logger.Log("INFO", "task_picked", workerID, task.ID, string(task.Status), task.RetryCount, "worker picked task")
+			logger.Log(
+				"INFO",
+				"task_picked",
+				workerID,
+				task.ID,
+				string(task.Status),
+				task.RetryCount,
+				"worker picked task",
+			)
 
 			if rand.Float64() < config.Config.CrashRate {
-				logger.Log("ERROR", "worker_crash", workerID, task.ID, string(task.Status), task.RetryCount, "simulated worker crash")
+				logger.Log(
+					"ERROR",
+					"worker_crash",
+					workerID,
+					task.ID,
+					string(task.Status),
+					task.RetryCount,
+					"simulated worker crash",
+				)
 
 				task.Status = models.StatusFailed
 				task.UpdatedAt = time.Now().Format(time.RFC3339)
@@ -47,8 +80,7 @@ func StartWorker(workerID int) {
 
 func processWorkflow(workerID int, task models.Task) {
 	workflowStartTime := time.Now()
-
-	strategy := recovery.GetStrategyFromEnv()
+	configuredStrategy := recovery.GetStrategyFromEnv()
 
 	task.Status = models.StatusRunning
 	task.StartedAt = workflowStartTime.Format(time.RFC3339)
@@ -58,12 +90,30 @@ func processWorkflow(workerID int, task models.Task) {
 	processedTask := agents.ProcessTask(task)
 
 	for processedTask.Status == models.StatusFailed &&
-		recovery.ShouldRetry(strategy, processedTask.RetryCount, processedTask.MaxRetries) {
+		recovery.ShouldRetry(
+			configuredStrategy,
+			processedTask.RetryCount,
+			processedTask.MaxRetries,
+		) {
 
 		processedTask.RetryCount++
 		SaveTask(processedTask)
 
-		delay := recovery.GetRetryDelay(strategy, processedTask.RetryCount)
+		decision := recovery.ResolveStrategy(configuredStrategy)
+		delay := recovery.GetRetryDelay(
+			decision.SelectedStrategy,
+			processedTask.RetryCount,
+		)
+
+		message := fmt.Sprintf(
+			"configured=%s selected=%s delay=%s failure_rate=%.2f queue_depth=%d reason=%s",
+			decision.ConfiguredStrategy,
+			decision.SelectedStrategy,
+			delay,
+			decision.FailureRate,
+			decision.QueueDepth,
+			decision.Reason,
+		)
 
 		logger.Log(
 			"WARN",
@@ -72,7 +122,7 @@ func processWorkflow(workerID int, task models.Task) {
 			processedTask.ID,
 			string(processedTask.Status),
 			processedTask.RetryCount,
-			"retrying failed task with recovery strategy",
+			message,
 		)
 
 		time.Sleep(delay)
@@ -89,7 +139,8 @@ func processWorkflow(workerID int, task models.Task) {
 	workflowEndTime := time.Now()
 
 	processedTask.CompletedAt = workflowEndTime.Format(time.RFC3339)
-	processedTask.RecoveryDuration = workflowEndTime.Sub(workflowStartTime).String()
+	processedTask.RecoveryDuration =
+		workflowEndTime.Sub(workflowStartTime).String()
 	processedTask.UpdatedAt = workflowEndTime.Format(time.RFC3339)
 
 	SaveTask(processedTask)
@@ -101,5 +152,13 @@ func processWorkflow(workerID int, task models.Task) {
 		workflowEndTime.Sub(workflowStartTime),
 	)
 
-	logger.Log("INFO", "task_finished", workerID, processedTask.ID, string(processedTask.Status), processedTask.RetryCount, "worker finished task")
+	logger.Log(
+		"INFO",
+		"task_finished",
+		workerID,
+		processedTask.ID,
+		string(processedTask.Status),
+		processedTask.RetryCount,
+		"worker finished task",
+	)
 }

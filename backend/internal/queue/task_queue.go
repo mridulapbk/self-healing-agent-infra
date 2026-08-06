@@ -56,3 +56,12 @@ func DequeueTask() (models.Task, error) {
 
 	return task, nil
 }
+
+// GetQueueLength returns the number of workflows currently waiting in Redis.
+func GetQueueLength() (int64, error) {
+	if RedisQueue == nil {
+		return 0, fmt.Errorf("Redis queue is not initialized")
+	}
+
+	return RedisQueue.LLen(ctx, queueName).Result()
+}
